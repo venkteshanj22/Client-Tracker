@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Google OAuth Callback</title>
+</head>
+<body>
+    <script>
+        // This page handles the OAuth callback
+        const urlParams = new URLSearchParams(window.location.search);
+        const code = urlParams.get('code');
+        const error = urlParams.get('error');
+        
+        if (code) {
+            // Send the code back to the parent window
+            window.opener.postMessage({
+                type: 'GOOGLE_AUTH_SUCCESS',
+                code: code
+            }, window.location.origin);
+        } else if (error) {
+            window.opener.postMessage({
+                type: 'GOOGLE_AUTH_ERROR',
+                error: error
+            }, window.location.origin);
+        }
+        
+        // Close the popup
+        window.close();
+    </script>
+    <div style="text-align: center; margin-top: 50px; font-family: Arial, sans-serif;">
+        <h2>Processing authentication...</h2>
+        <p>This window will close automatically.</p>
+    </div>
+</body>
+</html>
