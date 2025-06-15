@@ -366,8 +366,9 @@ def test_user_management(tester):
         return False
     
     # Create a new BDE user
+    timestamp = datetime.now().strftime('%H%M%S')
     new_bde = {
-        "email": f"testbde{datetime.now().strftime('%H%M%S')}@example.com",
+        "email": f"testbde{timestamp}@example.com",
         "name": "Test BDE User",
         "password": "testpassword123",
         "role": "bde"
@@ -383,6 +384,67 @@ def test_user_management(tester):
     
     if not success:
         print("❌ Failed to create new BDE user")
+        return False
+    
+    # Get the user ID of the newly created user
+    new_user_id = response.get('id')
+    if not new_user_id:
+        print("❌ Failed to get ID of newly created user")
+        return False
+    
+    print(f"Created new BDE user with ID: {new_user_id}")
+    
+    # Test the GET /api/users/{user_id} endpoint
+    success, user_details = tester.run_test(
+        "Get User Details",
+        "GET",
+        f"users/{new_user_id}",
+        200
+    )
+    
+    if not success:
+        print("❌ Failed to get user details")
+        return False
+    
+    print(f"Retrieved user details: {user_details.get('name')} ({user_details.get('email')})")
+    
+    # Test the PUT /api/users/{user_id} endpoint (NEWLY ADDED)
+    update_data = {
+        "name": f"Updated BDE User {timestamp}",
+        "email": f"updated.bde{timestamp}@example.com",
+        "is_active": True
+    }
+    
+    success, updated_user = tester.run_test(
+        "Update User (NEWLY ADDED ENDPOINT)",
+        "PUT",
+        f"users/{new_user_id}",
+        200,
+        data=update_data
+    )
+    
+    if not success:
+        print("❌ Failed to update user - PUT /api/users/{user_id} endpoint may not be working")
+        return False
+    
+    print(f"Updated user: {updated_user.get('name')} ({updated_user.get('email')})")
+    
+    # Verify the update was successful
+    success, verified_user = tester.run_test(
+        "Verify User Update",
+        "GET",
+        f"users/{new_user_id}",
+        200
+    )
+    
+    if not success:
+        print("❌ Failed to verify user update")
+        return False
+    
+    if verified_user.get('name') == update_data['name'] and verified_user.get('email') == update_data['email']:
+        print("✅ User update verified successfully")
+    else:
+        print(f"❌ User update verification failed. Expected name: {update_data['name']}, got: {verified_user.get('name')}")
         return False
     
     # Get updated BDEs list
