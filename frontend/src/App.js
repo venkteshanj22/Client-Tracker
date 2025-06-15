@@ -1164,11 +1164,18 @@ const NotificationSystem = ({ user, onUpdate }) => {
 const UserManagement = ({ onClose, onUpdate, currentUser }) => {
   const [users, setUsers] = useState([]);
   const [showAddUser, setShowAddUser] = useState(false);
+  const [editingUser, setEditingUser] = useState(null);
   const [formData, setFormData] = useState({
     email: '',
     name: '',
     password: '',
     role: 'bde'
+  });
+  const [editFormData, setEditFormData] = useState({
+    email: '',
+    name: '',
+    role: '',
+    is_active: true
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -1204,6 +1211,38 @@ const UserManagement = ({ onClose, onUpdate, currentUser }) => {
     } catch (error) {
       console.error('Error creating user:', error);
       alert(error.response?.data?.detail || 'Error creating user');
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const handleEditUser = (user) => {
+    setEditingUser(user);
+    setEditFormData({
+      email: user.email,
+      name: user.name,
+      role: user.role,
+      is_active: user.is_active
+    });
+  };
+
+  const handleUpdateUser = async (e) => {
+    e.preventDefault();
+    setIsSubmitting(true);
+    
+    try {
+      await axios.put(`${API}/users/${editingUser.id}`, editFormData, {
+        headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
+      });
+      
+      setEditingUser(null);
+      setEditFormData({ email: '', name: '', role: '', is_active: true });
+      fetchUsers();
+      onUpdate();
+      alert('User updated successfully!');
+    } catch (error) {
+      console.error('Error updating user:', error);
+      alert(error.response?.data?.detail || 'Error updating user');
     } finally {
       setIsSubmitting(false);
     }
