@@ -795,7 +795,10 @@ def main():
     tester = CRMAPITester(backend_url)
     
     # Initialize super admin if needed
-    tester.test_init_super_admin()
+    try:
+        tester.test_init_super_admin()
+    except Exception as e:
+        print(f"Error initializing super admin: {e}")
     
     # Login as super admin
     if not tester.test_login("admin@crm.com", "admin123"):
