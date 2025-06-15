@@ -601,6 +601,63 @@ async def get_users(current_user: User = Depends(check_permissions([UserRole.SUP
     users = await db.users.find({}, {"password": 0}).to_list(1000)
     return [User(**user) for user in users]
 
+@api_router.get("/users/{user_id}", response_model=User)
+async def get_user_by_id(user_id: str, current_user: User = Depends(check_permissions([UserRole.SUPER_ADMIN, UserRole.ADMIN]))):
+    """Get user by ID"""
+    user_doc = await db.users.find_one({"id": user_id}, {"password": 0})
+    if not user_doc:
+        raise HTTPException(status_code=404, detail="User not found")
+    return User(**user_doc)
+
+@api_router.put("/users/{user_id}", response_model=User)
+async def update_user(user_id: str, user_data: UserUpdate, current_user: User = Depends(check_permissions([UserRole.SUPER_ADMIN, UserRole.ADMIN]))):
+    """Update user (Admin and Super Admin can update users)"""
+    # Find the user to update
+    user_doc = await db.users.find_one({"id": user_id})
+    if not user_doc:
+        raise HTTPException(status_code=404, detail="User not found")
+    
+    existing_user = User(**{k: v for k, v in user_doc.items() if k != "password"})
+    
+    # Role-based permission checks
+    if current_user.role == UserRole.ADMIN:
+        # Admin users cannot update other admins or super admins
+        if existing_user.role in [UserRole.ADMIN, UserRole.SUPER_ADMIN]:
+            raise HTTPException(status_code=403, detail="Admins cannot update admin or super admin users")
+        
+        # Admin users cannot set users to admin or super admin roles
+        if user_data.role and user_data.role in [UserRole.ADMIN, UserRole.SUPER_ADMIN]:
+            raise HTTPException(status_code=403, detail="Admins cannot assign admin or super admin roles")
+    
+    # Prevent changing super admin role (only super admin can change their own role)
+    if existing_user.role == UserRole.SUPER_ADMIN and current_user.id != user_id:
+        raise HTTPException(status_code=403, detail="Cannot modify super admin users")
+    
+    # Create update dictionary with non-None values
+    update_dict = {k: v for k, v in user_data.dict().items() if v is not None}
+    
+    if not update_dict:
+        raise HTTPException(status_code=400, detail="No valid fields to update")
+    
+    # Check if email is already taken by another user
+    if "email" in update_dict:
+        existing_email_user = await db.users.find_one({"email": update_dict["email"], "id": {"$ne": user_id}})
+        if existing_email_user:
+            raise HTTPException(status_code=400, detail="Email already in use")
+    
+    # Update user
+    await db.users.update_one(
+        {"id": user_id},
+        {"$set": update_dict}
+    )
+    
+    # Send notification
+    await send_notification(f"👤 User {existing_user.name} updated by {current_user.name}")
+    
+    # Return updated user
+    updated_user_doc = await db.users.find_one({"id": user_id}, {"password": 0})
+    return User(**updated_user_doc)
+
 @api_router.get("/users/bdes", response_model=List[User])
 async def get_bdes(current_user: User = Depends(get_current_user)):
     bdes = await db.users.find({"role": UserRole.BDE}, {"password": 0}).to_list(1000)
