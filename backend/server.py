@@ -82,6 +82,12 @@ class UserCreate(BaseModel):
     password: str
     role: UserRole
 
+class UserUpdate(BaseModel):
+    email: Optional[str] = None
+    name: Optional[str] = None
+    role: Optional[UserRole] = None
+    is_active: Optional[bool] = None
+
 class UserLogin(BaseModel):
     email: str
     password: str
