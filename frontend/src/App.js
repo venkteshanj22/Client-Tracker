@@ -1421,15 +1421,24 @@ const UserManagement = ({ onClose, onUpdate, currentUser }) => {
                     </td>
                     {currentUser.role === 'super_admin' && (
                       <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                        {user.id !== currentUser.id && (
+                        <div className="flex space-x-2">
                           <button
-                            onClick={() => handleDeleteUser(user)}
-                            className="text-red-600 hover:text-red-900"
-                            title="Delete User"
+                            onClick={() => handleEditUser(user)}
+                            className="text-indigo-600 hover:text-indigo-900"
+                            title="Edit User"
                           >
-                            <Trash2 className="w-4 h-4" />
+                            <Edit className="w-4 h-4" />
                           </button>
-                        )}
+                          {user.id !== currentUser.id && (
+                            <button
+                              onClick={() => handleDeleteUser(user)}
+                              className="text-red-600 hover:text-red-900"
+                              title="Delete User"
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </button>
+                          )}
+                        </div>
                       </td>
                     )}
                   </tr>
