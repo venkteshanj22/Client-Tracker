@@ -788,8 +788,8 @@ def test_delete_permissions(tester):
         return False
 
 def main():
-    # Get the backend URL from the frontend .env file
-    backend_url = "https://c01ead0d-4330-4937-b86c-c3ce768fbe26.preview.emergentagent.com"
+    # Use the local backend URL since the public URL is not accessible
+    backend_url = "http://localhost:8001"
     
     print(f"Testing CRM API at {backend_url}")
     tester = CRMAPITester(backend_url)
