@@ -1568,6 +1568,45 @@ const EditClientModal = ({ client, onClose, onUpdate, bdes }) => {
     assigned_bde: client.assigned_bde
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [attachments, setAttachments] = useState([]);
+  const [uploading, setUploading] = useState(false);
+
+  const handleFileUpload = async (files) => {
+    setUploading(true);
+    try {
+      const formData = new FormData();
+      files.forEach(file => {
+        formData.append('files', file);
+      });
+      
+      const response = await axios.post(`${API}/clients/${client.id}/attachments`, formData, {
+        headers: { 
+          Authorization: `Bearer ${localStorage.getItem('token')}`,
+          'Content-Type': 'multipart/form-data'
+        }
+      });
+      
+      setAttachments(prev => [...prev, ...response.data]);
+    } catch (error) {
+      console.error('Error uploading files:', error);
+      alert('Error uploading files');
+    } finally {
+      setUploading(false);
+    }
+  };
+
+  const removeAttachment = async (attachmentId) => {
+    try {
+      await axios.delete(`${API}/clients/${client.id}/attachments/${attachmentId}`, {
+        headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
+      });
+      
+      setAttachments(prev => prev.filter(a => a.id !== attachmentId));
+    } catch (error) {
+      console.error('Error removing attachment:', error);
+      alert('Error removing attachment');
+    }
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
