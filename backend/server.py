@@ -133,6 +133,7 @@ class Client(BaseModel):
     decision_maker_details: Optional[str] = None
     stage: ClientStage = ClientStage.FIRST_CONTACT
     assigned_bde: str  # User ID
+    created_by: str  # User ID who created the client (immutable)
     notes: List[Union[str, NoteWithAttachment]] = []  # Support both old and new formats
     attachments: List[FileAttachment] = []  # Client-level attachments
     created_at: datetime = Field(default_factory=datetime.utcnow)
