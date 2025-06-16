@@ -765,14 +765,35 @@ const ClientDetailModal = ({ client, onClose, onUpdate, currentUser }) => {
     
     setIsAddingNote(true);
     try {
-      await axios.post(`${API}/clients/${client.id}/notes`, 
+      // Add the note first
+      const noteResponse = await axios.post(`${API}/clients/${client.id}/notes`, 
         { text: notes },
         { headers: { Authorization: `Bearer ${localStorage.getItem('token')}` } }
       );
+      
+      const noteId = noteResponse.data.note_id;
+
+      // Add attachments to the note if any
+      if (noteAttachments.length > 0 && noteId) {
+        for (const attachment of noteAttachments) {
+          const formData = new FormData();
+          formData.append('file', attachment.file);
+          
+          await axios.post(`${API}/clients/${client.id}/notes/${noteId}/attachments`, formData, {
+            headers: {
+              Authorization: `Bearer ${localStorage.getItem('token')}`,
+              'Content-Type': 'multipart/form-data'
+            }
+          });
+        }
+      }
+
       setNotes('');
+      setNoteAttachments([]);
       onUpdate(); // Refresh data
     } catch (error) {
       console.error('Error adding note:', error);
+      alert('Error adding note: ' + (error.response?.data?.detail || error.message));
     } finally {
       setIsAddingNote(false);
     }
