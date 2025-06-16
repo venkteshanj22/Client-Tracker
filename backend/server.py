@@ -572,6 +572,8 @@ async def send_notification(message: str):
         import json
         
         slack_webhook_url = os.environ.get('SLACK_WEBHOOK_URL')
+        logger.info(f"NOTIFICATION ATTEMPT: {message}")
+        logger.info(f"Slack webhook URL configured: {'Yes' if slack_webhook_url else 'No'}")
         
         if slack_webhook_url:
             # Send to Slack
@@ -581,22 +583,32 @@ async def send_notification(message: str):
                 "icon_emoji": ":briefcase:"
             }
             
+            logger.info(f"Sending to Slack: {payload}")
+            
             response = requests.post(
                 slack_webhook_url,
                 data=json.dumps(payload),
-                headers={'Content-Type': 'application/json'}
+                headers={'Content-Type': 'application/json'},
+                timeout=10
             )
             
+            logger.info(f"Slack response status: {response.status_code}")
+            logger.info(f"Slack response text: {response.text}")
+            
             if response.status_code == 200:
-                logger.info(f"Slack notification sent: {message}")
+                logger.info(f"✅ Slack notification sent successfully: {message}")
             else:
-                logger.error(f"Failed to send Slack notification: {response.status_code}")
+                logger.error(f"❌ Failed to send Slack notification: {response.status_code} - {response.text}")
+        else:
+            logger.warning("⚠️ No Slack webhook URL configured")
         
         # Also log the notification
         logger.info(f"NOTIFICATION: {message}")
         
     except Exception as e:
-        logger.error(f"Failed to send notification: {e}")
+        logger.error(f"❌ Failed to send notification: {e}")
+        import traceback
+        logger.error(f"Traceback: {traceback.format_exc()}")
 
 @api_router.delete("/clients/{client_id}")
 async def delete_client(client_id: str, current_user: User = Depends(get_current_user)):
