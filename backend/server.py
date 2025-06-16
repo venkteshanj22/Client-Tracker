@@ -66,6 +66,24 @@ class ClientStage(int, Enum):
     NEGOTIATION = 4
     CONVERTED_CLIENT = 5
 
+# File attachment models
+class FileAttachment(BaseModel):
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    filename: str
+    original_filename: str
+    file_size: int
+    file_type: str
+    uploaded_by: str  # User ID
+    uploaded_at: datetime = Field(default_factory=datetime.utcnow)
+
+class NoteWithAttachment(BaseModel):
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    text: str
+    author: str  # User name
+    author_id: str  # User ID
+    timestamp: datetime = Field(default_factory=datetime.utcnow)
+    attachments: List[FileAttachment] = []
+
 # Models
 class User(BaseModel):
     id: str = Field(default_factory=lambda: str(uuid.uuid4()))
