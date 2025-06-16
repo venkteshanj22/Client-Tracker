@@ -601,6 +601,11 @@ async def get_users(current_user: User = Depends(check_permissions([UserRole.SUP
     users = await db.users.find({}, {"password": 0}).to_list(1000)
     return [User(**user) for user in users]
 
+@api_router.get("/users/bdes", response_model=List[User])
+async def get_bdes(current_user: User = Depends(get_current_user)):
+    bdes = await db.users.find({"role": UserRole.BDE}, {"password": 0}).to_list(1000)
+    return [User(**user) for user in bdes]
+
 @api_router.get("/users/{user_id}", response_model=User)
 async def get_user_by_id(user_id: str, current_user: User = Depends(check_permissions([UserRole.SUPER_ADMIN, UserRole.ADMIN]))):
     """Get user by ID"""
