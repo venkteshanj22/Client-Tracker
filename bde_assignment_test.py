@@ -72,6 +72,8 @@ class BDEAssignmentTest:
             "contact_person": "John Doe",
             "email": "john@testcompany.com",
             "phone": "+1-555-TEST",
+            "industry": "Technology",
+            "company_size": "50-100",
             "requirements": "Website development and digital marketing",
             "budget_range": "50k-100k",
             "stage": "first_contact",
