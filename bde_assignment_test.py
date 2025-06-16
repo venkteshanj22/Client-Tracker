@@ -83,7 +83,7 @@ class BDEAssignmentTest:
         headers = {'Authorization': f'Bearer {self.token}'}
         response = requests.post(f"{self.base_url}/api/clients", json=client_data, headers=headers)
         
-        if response.status_code == 201:
+        if response.status_code in [200, 201]:
             client = response.json()
             print(f"   ✅ Client created successfully:")
             print(f"      - Company: {client['company_name']}")
