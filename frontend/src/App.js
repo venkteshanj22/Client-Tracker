@@ -390,10 +390,14 @@ const LoginForm = ({ onLogin }) => {
 };
 
 // Dashboard Component
-const Dashboard = ({ user, stats }) => {
+const Dashboard = ({ user, stats, onNavigate }) => {
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6 mb-8">
-      <div className="bg-white p-6 rounded-lg border border-gray-200">
+      {/* Total Clients Card */}
+      <div 
+        onClick={() => onNavigate('clients')}
+        className="bg-white p-6 rounded-lg border border-gray-200 cursor-pointer hover:shadow-lg hover:border-blue-300 transition-all duration-200"
+      >
         <div className="flex items-center">
           <Building2 className="w-8 h-8 text-blue-600 mr-3" />
           <div>
@@ -403,7 +407,11 @@ const Dashboard = ({ user, stats }) => {
         </div>
       </div>
 
-      <div className="bg-white p-6 rounded-lg border border-gray-200">
+      {/* Converted Clients Card */}
+      <div 
+        onClick={() => onNavigate('clients', { filter: 'converted' })}
+        className="bg-white p-6 rounded-lg border border-gray-200 cursor-pointer hover:shadow-lg hover:border-green-300 transition-all duration-200"
+      >
         <div className="flex items-center">
           <Target className="w-8 h-8 text-green-600 mr-3" />
           <div>
@@ -413,7 +421,11 @@ const Dashboard = ({ user, stats }) => {
         </div>
       </div>
 
-      <div className="bg-white p-6 rounded-lg border border-gray-200">
+      {/* Dropped Clients Card */}
+      <div 
+        onClick={() => onNavigate('clients', { filter: 'dropped' })}
+        className="bg-white p-6 rounded-lg border border-gray-200 cursor-pointer hover:shadow-lg hover:border-red-300 transition-all duration-200"
+      >
         <div className="flex items-center">
           <AlertCircle className="w-8 h-8 text-red-600 mr-3" />
           <div>
@@ -423,7 +435,11 @@ const Dashboard = ({ user, stats }) => {
         </div>
       </div>
 
-      <div className="bg-white p-6 rounded-lg border border-gray-200">
+      {/* Pending Tasks Card */}
+      <div 
+        onClick={() => onNavigate('tasks', { filter: 'pending' })}
+        className="bg-white p-6 rounded-lg border border-gray-200 cursor-pointer hover:shadow-lg hover:border-yellow-300 transition-all duration-200"
+      >
         <div className="flex items-center">
           <Clock className="w-8 h-8 text-yellow-600 mr-3" />
           <div>
@@ -433,7 +449,11 @@ const Dashboard = ({ user, stats }) => {
         </div>
       </div>
 
-      <div className="bg-white p-6 rounded-lg border border-gray-200">
+      {/* Overdue Tasks Card */}
+      <div 
+        onClick={() => onNavigate('tasks', { filter: 'overdue' })}
+        className="bg-white p-6 rounded-lg border border-gray-200 cursor-pointer hover:shadow-lg hover:border-red-300 transition-all duration-200"
+      >
         <div className="flex items-center">
           <AlertCircle className="w-8 h-8 text-red-600 mr-3" />
           <div>
