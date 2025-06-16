@@ -426,18 +426,143 @@ async def add_note(client_id: str, note: dict, current_user: User = Depends(get_
     if current_user.role == UserRole.BDE and client.assigned_bde != current_user.id:
         raise HTTPException(status_code=403, detail="Access denied")
     
-    new_note = f"{datetime.utcnow().strftime('%Y-%m-%d %H:%M')} - {current_user.name}: {note['text']}"
+    # Create new note with attachment support
+    new_note = NoteWithAttachment(
+        text=note['text'],
+        author=current_user.name,
+        author_id=current_user.id,
+        attachments=[]  # Will be populated by separate file upload
+    )
     
     # Add note to the beginning (latest first)
     await db.clients.update_one(
         {"id": client_id}, 
-        {"$push": {"notes": {"$each": [new_note], "$position": 0}}, "$set": {"last_interaction": datetime.utcnow()}}
+        {"$push": {"notes": {"$each": [new_note.dict()], "$position": 0}}, "$set": {"last_interaction": datetime.utcnow()}}
     )
     
     # Send notification
     await send_notification(f"📝 Note added to {client.company_name} by {current_user.name}")
     
-    return {"message": "Note added successfully"}
+    return {"message": "Note added successfully", "note_id": new_note.id}
+
+@api_router.post("/upload-file")
+async def upload_file(file: UploadFile = File(...), current_user: User = Depends(get_current_user)):
+    """Upload a file and return file attachment details"""
+    
+    # Validate file
+    if not validate_file(file):
+        raise HTTPException(
+            status_code=400, 
+            detail=f"File type {file.content_type} not allowed. Allowed types: PDF, DOCX, Images, Videos, etc."
+        )
+    
+    # Check file size
+    if file.size and file.size > MAX_FILE_SIZE:
+        raise HTTPException(status_code=400, detail=f"File too large. Maximum size is {MAX_FILE_SIZE//1024//1024}MB")
+    
+    try:
+        # Save file
+        attachment = await save_uploaded_file(file, current_user.id)
+        return attachment.dict()
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error uploading file: {str(e)}")
+
+@api_router.post("/clients/{client_id}/attachments")
+async def add_client_attachment(
+    client_id: str, 
+    file: UploadFile = File(...), 
+    current_user: User = Depends(get_current_user)
+):
+    """Add attachment to a client"""
+    client_doc = await db.clients.find_one({"id": client_id})
+    if not client_doc:
+        raise HTTPException(status_code=404, detail="Client not found")
+    
+    client = Client(**client_doc)
+    
+    # BDE can only add attachments to their clients
+    if current_user.role == UserRole.BDE and client.assigned_bde != current_user.id:
+        raise HTTPException(status_code=403, detail="Access denied")
+    
+    # Validate and upload file
+    if not validate_file(file):
+        raise HTTPException(
+            status_code=400, 
+            detail=f"File type {file.content_type} not allowed"
+        )
+    
+    try:
+        # Save file
+        attachment = await save_uploaded_file(file, current_user.id)
+        
+        # Add attachment to client
+        await db.clients.update_one(
+            {"id": client_id},
+            {"$push": {"attachments": attachment.dict()}}
+        )
+        
+        # Send notification
+        await send_notification(f"📎 File attached to {client.company_name} by {current_user.name}: {attachment.original_filename}")
+        
+        return {"message": "Attachment added successfully", "attachment": attachment.dict()}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error uploading attachment: {str(e)}")
+
+@api_router.post("/clients/{client_id}/notes/{note_id}/attachments")
+async def add_note_attachment(
+    client_id: str,
+    note_id: str,
+    file: UploadFile = File(...),
+    current_user: User = Depends(get_current_user)
+):
+    """Add attachment to a specific note"""
+    client_doc = await db.clients.find_one({"id": client_id})
+    if not client_doc:
+        raise HTTPException(status_code=404, detail="Client not found")
+    
+    client = Client(**client_doc)
+    
+    # BDE can only add attachments to their clients
+    if current_user.role == UserRole.BDE and client.assigned_bde != current_user.id:
+        raise HTTPException(status_code=403, detail="Access denied")
+    
+    # Validate and upload file
+    if not validate_file(file):
+        raise HTTPException(
+            status_code=400, 
+            detail=f"File type {file.content_type} not allowed"
+        )
+    
+    try:
+        # Save file
+        attachment = await save_uploaded_file(file, current_user.id)
+        
+        # Find and update the specific note
+        await db.clients.update_one(
+            {"id": client_id, "notes.id": note_id},
+            {"$push": {"notes.$.attachments": attachment.dict()}}
+        )
+        
+        # Send notification
+        await send_notification(f"📎 File attached to note in {client.company_name} by {current_user.name}: {attachment.original_filename}")
+        
+        return {"message": "Note attachment added successfully", "attachment": attachment.dict()}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error uploading note attachment: {str(e)}")
+
+@api_router.get("/download/{filename}")
+async def download_file(filename: str, current_user: User = Depends(get_current_user)):
+    """Download a file by filename"""
+    file_path = UPLOAD_DIRECTORY / filename
+    
+    if not file_path.exists():
+        raise HTTPException(status_code=404, detail="File not found")
+    
+    return FileResponse(
+        path=file_path,
+        filename=filename,
+        media_type='application/octet-stream'
+    )
 
 # Simple notification system (can be replaced with Slack/Discord webhook)
 async def send_notification(message: str):
