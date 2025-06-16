@@ -1912,7 +1912,7 @@ const EditClientModal = ({ client, onClose, onUpdate, bdes }) => {
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Budget</label>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Budget *</label>
               <div className="flex">
                 <select
                   value={formData.budget_currency}
@@ -2247,7 +2247,7 @@ const AddClientModal = ({ onClose, onAdd, bdes, currentUser }) => {
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Budget</label>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Budget *</label>
               <div className="flex">
                 <select
                   value={formData.budget_currency}
