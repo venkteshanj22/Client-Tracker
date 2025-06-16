@@ -683,6 +683,8 @@ const ClientDetailModal = ({ client, onClose, onUpdate, currentUser }) => {
   const [activeTab, setActiveTab] = useState('overview');
   const [notes, setNotes] = useState('');
   const [isAddingNote, setIsAddingNote] = useState(false);
+  const [noteAttachments, setNoteAttachments] = useState([]);
+  const [uploading, setUploading] = useState(false);
   const [tasks, setTasks] = useState([]);
   const [allUsers, setAllUsers] = useState([]);
   const [newTask, setNewTask] = useState({
@@ -692,6 +694,41 @@ const ClientDetailModal = ({ client, onClose, onUpdate, currentUser }) => {
     assigned_to: currentUser.id
   });
   const [isAddingTask, setIsAddingTask] = useState(false);
+
+  const handleNoteFileUpload = async (files) => {
+    setUploading(true);
+    const uploadedFiles = [];
+
+    try {
+      for (const file of files) {
+        const formData = new FormData();
+        formData.append('file', file);
+
+        const response = await axios.post(`${API}/upload-file`, formData, {
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem('token')}`,
+            'Content-Type': 'multipart/form-data'
+          }
+        });
+
+        uploadedFiles.push({
+          ...response.data,
+          file: file
+        });
+      }
+
+      setNoteAttachments(prev => [...prev, ...uploadedFiles]);
+    } catch (error) {
+      console.error('Error uploading files:', error);
+      alert('Error uploading files: ' + (error.response?.data?.detail || error.message));
+    } finally {
+      setUploading(false);
+    }
+  };
+
+  const removeNoteAttachment = (attachmentId) => {
+    setNoteAttachments(prev => prev.filter(att => att.id !== attachmentId));
+  };
 
   useEffect(() => {
     if (activeTab === 'tasks') {
