@@ -2125,6 +2125,67 @@ const AddClientModal = ({ onClose, onAdd, bdes, currentUser }) => {
                 placeholder="Describe the client requirements..."
               />
             </div>
+
+            {/* File Attachments Section */}
+            <div className="md:col-span-2">
+              <label className="block text-sm font-medium text-gray-700 mb-2">Attachments</label>
+              <div className="border-2 border-dashed border-gray-300 rounded-lg p-4">
+                <input
+                  type="file"
+                  multiple
+                  accept=".pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.txt,.csv,.jpg,.jpeg,.png,.gif,.webp,.mp4,.avi,.mov,.wmv,.zip,.rar,.7z"
+                  onChange={(e) => handleFileUpload(Array.from(e.target.files))}
+                  className="hidden"
+                  id="file-upload"
+                  disabled={uploading}
+                />
+                <label 
+                  htmlFor="file-upload" 
+                  className={`cursor-pointer flex flex-col items-center justify-center py-4 ${uploading ? 'opacity-50' : ''}`}
+                >
+                  <svg className="w-8 h-8 text-gray-400 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
+                  </svg>
+                  <span className="text-sm text-gray-600">
+                    {uploading ? 'Uploading...' : 'Click to upload files or drag and drop'}
+                  </span>
+                  <span className="text-xs text-gray-500 mt-1">
+                    PDF, DOCX, Images, Videos, etc. (Max 50MB each)
+                  </span>
+                </label>
+              </div>
+
+              {/* Display uploaded files */}
+              {attachments.length > 0 && (
+                <div className="mt-3">
+                  <h4 className="text-sm font-medium text-gray-700 mb-2">Uploaded Files:</h4>
+                  <div className="space-y-2">
+                    {attachments.map((attachment) => (
+                      <div key={attachment.id} className="flex items-center justify-between bg-gray-50 p-2 rounded">
+                        <div className="flex items-center">
+                          <svg className="w-4 h-4 text-gray-500 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13" />
+                          </svg>
+                          <span className="text-sm text-gray-700">{attachment.original_filename}</span>
+                          <span className="text-xs text-gray-500 ml-2">
+                            ({(attachment.file_size / 1024 / 1024).toFixed(2)} MB)
+                          </span>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => removeAttachment(attachment.id)}
+                          className="text-red-600 hover:text-red-800"
+                        >
+                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
+                          </svg>
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
           </div>
 
           <div className="flex justify-end space-x-3 pt-4">
