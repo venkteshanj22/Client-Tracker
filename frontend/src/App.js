@@ -939,10 +939,60 @@ const ClientDetailModal = ({ client, onClose, onUpdate, currentUser }) => {
                   className="w-full p-3 border border-gray-300 rounded-lg resize-none"
                   rows="3"
                 />
+                
+                {/* File attachment for notes */}
+                <div className="mt-3">
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Attach Files (Optional)</label>
+                  <div className="border border-dashed border-gray-300 rounded-lg p-3">
+                    <input
+                      type="file"
+                      multiple
+                      accept=".pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.txt,.csv,.jpg,.jpeg,.png,.gif,.webp,.mp4,.avi,.mov,.wmv,.zip,.rar,.7z"
+                      onChange={(e) => handleNoteFileUpload(Array.from(e.target.files))}
+                      className="hidden"
+                      id="note-file-upload"
+                      disabled={uploading}
+                    />
+                    <label 
+                      htmlFor="note-file-upload" 
+                      className={`cursor-pointer flex items-center justify-center py-2 ${uploading ? 'opacity-50' : ''}`}
+                    >
+                      <svg className="w-5 h-5 text-gray-400 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13" />
+                      </svg>
+                      <span className="text-sm text-gray-600">
+                        {uploading ? 'Uploading...' : 'Attach files'}
+                      </span>
+                    </label>
+                  </div>
+
+                  {/* Display selected files for notes */}
+                  {noteAttachments.length > 0 && (
+                    <div className="mt-2">
+                      <div className="space-y-1">
+                        {noteAttachments.map((attachment) => (
+                          <div key={attachment.id} className="flex items-center justify-between bg-gray-100 p-2 rounded text-sm">
+                            <span className="text-gray-700">{attachment.original_filename}</span>
+                            <button
+                              type="button"
+                              onClick={() => removeNoteAttachment(attachment.id)}
+                              className="text-red-600 hover:text-red-800"
+                            >
+                              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
+                              </svg>
+                            </button>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </div>
+
                 <button
                   onClick={addNote}
                   disabled={isAddingNote || !notes.trim()}
-                  className="mt-2 bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 disabled:opacity-50"
+                  className="mt-3 bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 disabled:opacity-50"
                 >
                   {isAddingNote ? 'Adding...' : 'Add Note'}
                 </button>
@@ -951,11 +1001,55 @@ const ClientDetailModal = ({ client, onClose, onUpdate, currentUser }) => {
               {/* Notes List - Latest first */}
               <div className="space-y-3 max-h-60 overflow-y-auto">
                 {client.notes?.length > 0 ? (
-                  client.notes.map((note, index) => (
-                    <div key={index} className="bg-gray-50 p-3 rounded-lg">
-                      <p className="text-gray-700 whitespace-pre-wrap">{note}</p>
-                    </div>
-                  ))
+                  client.notes.map((note, index) => {
+                    // Handle both old string format and new object format
+                    const isOldFormat = typeof note === 'string';
+                    const noteText = isOldFormat ? note : note.text;
+                    const noteAuthor = isOldFormat ? '' : note.author;
+                    const noteTimestamp = isOldFormat ? '' : new Date(note.timestamp).toLocaleString();
+                    const noteAttachments = isOldFormat ? [] : (note.attachments || []);
+
+                    return (
+                      <div key={index} className="bg-gray-50 p-3 rounded-lg">
+                        <div className="flex justify-between items-start mb-2">
+                          <p className="text-gray-700 whitespace-pre-wrap flex-1">{noteText}</p>
+                        </div>
+                        
+                        {!isOldFormat && (
+                          <div className="text-xs text-gray-500 mb-2">
+                            By {noteAuthor} • {noteTimestamp}
+                          </div>
+                        )}
+
+                        {/* Display note attachments */}
+                        {noteAttachments.length > 0 && (
+                          <div className="mt-2">
+                            <div className="text-xs text-gray-600 mb-1">Attachments:</div>
+                            <div className="space-y-1">
+                              {noteAttachments.map((attachment) => (
+                                <div key={attachment.id} className="flex items-center text-sm">
+                                  <svg className="w-4 h-4 text-gray-500 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13" />
+                                  </svg>
+                                  <a 
+                                    href={`${API}/download/${attachment.filename}`}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="text-blue-600 hover:text-blue-800"
+                                  >
+                                    {attachment.original_filename}
+                                  </a>
+                                  <span className="text-xs text-gray-500 ml-1">
+                                    ({(attachment.file_size / 1024 / 1024).toFixed(2)} MB)
+                                  </span>
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })
                 ) : (
                   <p className="text-gray-500 italic">No notes yet</p>
                 )}
