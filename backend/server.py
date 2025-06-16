@@ -9,7 +9,7 @@ import logging
 import shutil
 from pathlib import Path
 from pydantic import BaseModel, Field
-from typing import List, Optional, Dict, Any
+from typing import List, Optional, Dict, Any, Union
 import uuid
 from datetime import datetime, timedelta
 import bcrypt
