@@ -172,8 +172,58 @@ class ClientUpdate(BaseModel):
     decision_maker_details: Optional[str] = None
     stage: Optional[ClientStage] = None
     assigned_bde: Optional[str] = None
-    is_dropped: Optional[bool] = None
-    drop_reason: Optional[str] = None
+    notes: Optional[List[NoteWithAttachment]] = None  # Updated
+
+# File upload configuration
+UPLOAD_DIRECTORY = Path(__file__).parent / "uploads"
+UPLOAD_DIRECTORY.mkdir(exist_ok=True)
+
+ALLOWED_FILE_TYPES = {
+    # Images
+    "image/jpeg", "image/jpg", "image/png", "image/gif", "image/webp",
+    # Documents
+    "application/pdf", "application/msword", 
+    "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+    "application/vnd.ms-excel",
+    "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+    "application/vnd.ms-powerpoint",
+    "application/vnd.openxmlformats-officedocument.presentationml.presentation",
+    "text/plain", "text/csv",
+    # Videos
+    "video/mp4", "video/avi", "video/mov", "video/wmv", "video/flv", "video/webm",
+    # Archives
+    "application/zip", "application/x-rar-compressed", "application/x-7z-compressed"
+}
+
+MAX_FILE_SIZE = 50 * 1024 * 1024  # 50MB
+
+def validate_file(file: UploadFile) -> bool:
+    """Validate file type and size"""
+    if file.content_type not in ALLOWED_FILE_TYPES:
+        return False
+    return True
+
+async def save_uploaded_file(file: UploadFile, user_id: str) -> FileAttachment:
+    """Save uploaded file and return FileAttachment object"""
+    # Generate unique filename
+    file_extension = Path(file.filename).suffix
+    unique_filename = f"{uuid.uuid4()}{file_extension}"
+    file_path = UPLOAD_DIRECTORY / unique_filename
+    
+    # Save file
+    with open(file_path, "wb") as buffer:
+        shutil.copyfileobj(file.file, buffer)
+    
+    # Get file size
+    file_size = file_path.stat().st_size
+    
+    return FileAttachment(
+        filename=unique_filename,
+        original_filename=file.filename,
+        file_size=file_size,
+        file_type=file.content_type,
+        uploaded_by=user_id
+    )
 
 class Task(BaseModel):
     id: str = Field(default_factory=lambda: str(uuid.uuid4()))
