@@ -372,7 +372,8 @@ async def get_clients(current_user: User = Depends(get_current_user)):
     if current_user.role == UserRole.BDE:
         query["assigned_bde"] = current_user.id
     
-    clients = await db.clients.find(query).to_list(1000)
+    # Sort by created_at descending (latest first)
+    clients = await db.clients.find(query).sort("created_at", -1).to_list(1000)
     return [Client(**client) for client in clients]
 
 @api_router.get("/clients/{client_id}", response_model=Client)
