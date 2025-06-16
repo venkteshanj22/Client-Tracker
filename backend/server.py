@@ -663,11 +663,6 @@ async def update_user(user_id: str, user_data: UserUpdate, current_user: User = 
     updated_user_doc = await db.users.find_one({"id": user_id}, {"password": 0})
     return User(**updated_user_doc)
 
-@api_router.get("/users/bdes", response_model=List[User])
-async def get_bdes(current_user: User = Depends(get_current_user)):
-    bdes = await db.users.find({"role": UserRole.BDE}, {"password": 0}).to_list(1000)
-    return [User(**user) for user in bdes]
-
 @api_router.post("/auth/change-password")
 async def change_password(password_data: PasswordChange, current_user: User = Depends(get_current_user)):
     """Change user password"""
