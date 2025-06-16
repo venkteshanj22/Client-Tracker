@@ -353,7 +353,10 @@ async def init_super_admin():
 # Client Routes
 @api_router.post("/clients", response_model=Client)
 async def create_client(client_data: ClientCreate, current_user: User = Depends(get_current_user)):
-    client = Client(**client_data.dict())
+    # Create client with created_by field automatically set
+    client_dict = client_data.dict()
+    client_dict["created_by"] = current_user.id  # Set created_by to current user
+    client = Client(**client_dict)
     await db.clients.insert_one(client.dict())
     
     # Send notification
