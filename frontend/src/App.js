@@ -1788,15 +1788,70 @@ const AddClientModal = ({ onClose, onAdd, bdes, currentUser }) => {
     assigned_bde: currentUser.role === 'bde' ? currentUser.id : '' // Auto-populate if BDE
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [attachments, setAttachments] = useState([]);
+  const [uploading, setUploading] = useState(false);
+
+  const handleFileUpload = async (files) => {
+    setUploading(true);
+    const uploadedFiles = [];
+
+    try {
+      for (const file of files) {
+        const formData = new FormData();
+        formData.append('file', file);
+
+        const response = await axios.post(`${API}/upload-file`, formData, {
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem('token')}`,
+            'Content-Type': 'multipart/form-data'
+          }
+        });
+
+        uploadedFiles.push({
+          ...response.data,
+          file: file
+        });
+      }
+
+      setAttachments(prev => [...prev, ...uploadedFiles]);
+    } catch (error) {
+      console.error('Error uploading files:', error);
+      alert('Error uploading files: ' + (error.response?.data?.detail || error.message));
+    } finally {
+      setUploading(false);
+    }
+  };
+
+  const removeAttachment = (attachmentId) => {
+    setAttachments(prev => prev.filter(att => att.id !== attachmentId));
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setIsSubmitting(true);
     
     try {
-      await axios.post(`${API}/clients`, formData, {
+      // Create client first
+      const clientResponse = await axios.post(`${API}/clients`, formData, {
         headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
       });
+      
+      const clientId = clientResponse.data.id;
+
+      // Add attachments to the client if any
+      if (attachments.length > 0) {
+        for (const attachment of attachments) {
+          const formData = new FormData();
+          formData.append('file', attachment.file);
+          
+          await axios.post(`${API}/clients/${clientId}/attachments`, formData, {
+            headers: {
+              Authorization: `Bearer ${localStorage.getItem('token')}`,
+              'Content-Type': 'multipart/form-data'
+            }
+          });
+        }
+      }
       
       onAdd();
       onClose();
