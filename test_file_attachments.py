@@ -184,7 +184,11 @@ class FileAttachmentTest:
         uploaded_file = self.test_file_upload_endpoint()
         
         # Step 3: Test client attachment
-        client_id, client_attachment = self.test_client_attachment()
+        result = self.test_client_attachment()
+        if result:
+            client_id, client_attachment = result
+        else:
+            client_id, client_attachment = None, None
         
         # Step 4: Test note with attachment
         if client_id:
